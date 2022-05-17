@@ -1,72 +1,172 @@
-(function()  {
-    let tmpl = document.createElement('template');
-    tmpl.innerHTML = `
-    `;
+/**
+ * ---------------------------------------
+ * This demo was created using amCharts 5.
+ * 
+ * For more information visit:
+ * https://www.amcharts.com/
+ * 
+ * Documentation is available at:
+ * https://www.amcharts.com/docs/v5/
+ * ---------------------------------------
+ */
 
-    customElements.define('com-sap-sample-helloworld2', class HelloWorld1 extends HTMLElement {
+// Create root element
+// https://www.amcharts.com/docs/v5/getting-started/#Root_element
+var root = am5.Root.new("chartdiv");
 
+// Set themes
+// https://www.amcharts.com/docs/v5/concepts/themes/
+root.setThemes([
+  am5themes_Animated.new(root)
+]);
 
-		constructor() {
-			super(); 
-			this._shadowRoot = this.attachShadow({mode: "open"});
-            this._shadowRoot.appendChild(tmpl.content.cloneNode(true));
-            this._firstConnection = false;
-            this._tagContainer;
-            this._tagType = "h1";
-            this._tagText = "Hello World";
-		}
+// Create chart
+// https://www.amcharts.com/docs/v5/charts/radar-chart/
+var chart = root.container.children.push(
+  am5radar.RadarChart.new(root, {
+    panX: false,
+    panY: false,
+    startAngle: 180,
+    endAngle: 360
+  })
+);
 
-        //Fired when the widget is added to the html DOM of the page
-        connectedCallback(){
-            this._firstConnection = true;
-            this.redraw();           
-        }
+chart.getNumberFormatter().set("numberFormat", "#'%'");
 
-         //Fired when the widget is removed from the html DOM of the page (e.g. by hide)
-        disconnectedCallback(){
-        
-        }
+// Create axis and its renderer
+// https://www.amcharts.com/docs/v5/charts/radar-chart/gauge-charts/#Axes
+var axisRenderer = am5radar.AxisRendererCircular.new(root, {
+  innerRadius: -40
+});
 
-         //When the custom widget is updated, the Custom Widget SDK framework executes this function first
-		onCustomWidgetBeforeUpdate(oChangedProperties) {
+axisRenderer.grid.template.setAll({
+  stroke: root.interfaceColors.get("background"),
+  visible: true,
+  strokeOpacity: 0.8
+});
 
-		}
+var xAxis = chart.xAxes.push(
+  am5xy.ValueAxis.new(root, {
+    maxDeviation: 0,
+    min: 0,
+    max: 100,
+    strictMinMax: true,
+    renderer: axisRenderer
+  })
+);
 
-        //When the custom widget is updated, the Custom Widget SDK framework executes this function after the update
-		onCustomWidgetAfterUpdate(oChangedProperties) {
-            if (this._firstConnection){
-                this.redraw();
-            }
-        }
-        
-        //When the custom widget is removed from the canvas or the analytic application is closed
-        onCustomWidgetDestroy(){
-        
-        }
+// Add clock hand
+// https://www.amcharts.com/docs/v5/charts/radar-chart/gauge-charts/#Clock_hands
+var axisDataItem = xAxis.makeDataItem({});
 
-        
-        //When the custom widget is resized on the canvas, the Custom Widget SDK framework executes the following JavaScript function call on the custom widget
-        // Commented out by default
-        /*
-        onCustomWidgetResize(width, height){
-        
-        }
-        */
+var clockHand = am5radar.ClockHand.new(root, {
+  pinRadius: 50,
+  radius: am5.percent(100),
+  innerRadius: 50,
+  bottomWidth: 0,
+  topWidth: 0
+});
 
-        redraw(){
-            if (this._tagContainer){
-                this._tagContainer.parentNode.removeChild(this._tagContainer);
-            }
+clockHand.pin.setAll({
+  fillOpacity: 0,
+  strokeOpacity: 0.5,
+  stroke: am5.color(0x000000),
+  strokeWidth: 1,
+  strokeDasharray: [2, 2]
+});
+clockHand.hand.setAll({
+  fillOpacity: 0,
+  strokeOpacity: 0.5,
+  stroke: am5.color(0x000000),
+  strokeWidth: 0.5
+});
 
-            var shadow = window.getSelection(this._shadowRoot);
-            this._tagContainer = document.createElement(this._tagType);
-            var theText = document.createTextNode(this._tagText);    
-            this._tagContainer.appendChild(theText); 
-            this._shadowRoot.appendChild(this._tagContainer);
+var bullet = axisDataItem.set(
+  "bullet",
+  am5xy.AxisBullet.new(root, {
+    sprite: clockHand
+  })
+);
 
-        }
-    
-    
-    });
-        
-})();
+xAxis.createAxisRange(axisDataItem);
+
+var label = chart.radarContainer.children.push(
+  am5.Label.new(root, {
+    centerX: am5.percent(50),
+    textAlign: "center",
+    centerY: am5.percent(50),
+    fontSize: "1.5em"
+  })
+);
+
+axisDataItem.set("value", 50);
+bullet.get("sprite").on("rotation", function () {
+  var value = axisDataItem.get("value");
+  label.set("text", Math.round(value).toString() + "%");
+});
+
+setInterval(function () {
+  var value = Math.round(Math.random() * 100);
+
+  axisDataItem.animate({
+    key: "value",
+    to: value,
+    duration: 500,
+    easing: am5.ease.out(am5.ease.cubic)
+  });
+
+  axisRange0.animate({
+    key: "endValue",
+    to: value,
+    duration: 500,
+    easing: am5.ease.out(am5.ease.cubic)
+  });
+
+  axisRange1.animate({
+    key: "value",
+    to: value,
+    duration: 500,
+    easing: am5.ease.out(am5.ease.cubic)
+  });
+}, 2000);
+
+chart.bulletsContainer.set("mask", undefined);
+
+var colorSet = am5.ColorSet.new(root, {});
+
+var axisRange0 = xAxis.createAxisRange(
+  xAxis.makeDataItem({
+    above: true,
+    value: 0,
+    endValue: 50
+  })
+);
+
+axisRange0.get("axisFill").setAll({
+  visible: true,
+  fill: colorSet.getIndex(0)
+});
+
+axisRange0.get("label").setAll({
+  forceHidden: true
+});
+
+var axisRange1 = xAxis.createAxisRange(
+  xAxis.makeDataItem({
+    above: true,
+    value: 50,
+    endValue: 100
+  })
+);
+
+axisRange1.get("axisFill").setAll({
+  visible: true,
+  fill: colorSet.getIndex(4)
+});
+
+axisRange1.get("label").setAll({
+  forceHidden: true
+});
+
+// Make stuff animate on load
+chart.appear(1000, 100);
